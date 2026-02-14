@@ -1,0 +1,59 @@
+{
+    "config": {
+        "step": {
+            "user": {
+                "title": "Add Appliance",
+                "description": "Set up power monitoring for an appliance. After setup, adjust thresholds and delays using the number entities.",
+                "data": {
+                    "appliance_name": "Appliance name",
+                    "power_entity": "Power sensor"
+                },
+                "data_description": {
+                    "appliance_name": "A friendly name for this appliance (e.g. Washing Machine, Dryer)",
+                    "power_entity": "The power consumption sensor entity (in Watts)"
+                }
+            }
+        },
+        "error": {
+            "entity_not_found": "Power sensor entity not found"
+        },
+        "abort": {
+            "already_configured": "This power sensor is already configured"
+        }
+    },
+    "entity": {
+        "sensor": {
+            "appliance_status": {
+                "name": "Status",
+                "state": {
+                    "off": "Off",
+                    "standby": "Standby",
+                    "running": "Running",
+                    "completed": "Completed"
+                }
+            }
+        },
+        "binary_sensor": {
+            "appliance_running": {
+                "name": "Running"
+            }
+        },
+        "number": {
+            "standby_threshold": {
+                "name": "Standby threshold"
+            },
+            "running_threshold": {
+                "name": "Running threshold"
+            },
+            "start_delay": {
+                "name": "Start confirmation delay"
+            },
+            "finish_delay": {
+                "name": "Finish confirmation delay"
+            },
+            "debounce_time": {
+                "name": "Debounce time"
+            }
+        }
+    }
+}

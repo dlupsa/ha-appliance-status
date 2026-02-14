@@ -1,0 +1,16 @@
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+dist/
+.eggs/
+*.egg
+.venv/
+venv/
+.idea/
+.vscode/
+*.swp
+*.swo
+devices.json
+analyze_flows.py
+trace_logic.py

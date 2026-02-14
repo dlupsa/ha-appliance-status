@@ -1,0 +1,59 @@
+{
+    "config": {
+        "step": {
+            "user": {
+                "title": "Dodaj napravo",
+                "description": "Nastavi sledenje porabe energije za napravo. Po nastavitvi prilagodi pragove in zakasnitve prek number entitet.",
+                "data": {
+                    "appliance_name": "Ime naprave",
+                    "power_entity": "Senzor moči"
+                },
+                "data_description": {
+                    "appliance_name": "Prijazno ime za napravo (npr. Pralni stroj, Sušilec)",
+                    "power_entity": "Entiteta senzorja porabe moči (v Wattih)"
+                }
+            }
+        },
+        "error": {
+            "entity_not_found": "Senzor moči ni bil najden"
+        },
+        "abort": {
+            "already_configured": "Ta senzor moči je že konfiguriran"
+        }
+    },
+    "entity": {
+        "sensor": {
+            "appliance_status": {
+                "name": "Stanje",
+                "state": {
+                    "off": "Izklopljeno",
+                    "standby": "Pripravljenost",
+                    "running": "Deluje",
+                    "completed": "Končano"
+                }
+            }
+        },
+        "binary_sensor": {
+            "appliance_running": {
+                "name": "Deluje"
+            }
+        },
+        "number": {
+            "standby_threshold": {
+                "name": "Prag pripravljenosti"
+            },
+            "running_threshold": {
+                "name": "Prag delovanja"
+            },
+            "start_delay": {
+                "name": "Zakasnitev potrditve zagona"
+            },
+            "finish_delay": {
+                "name": "Zakasnitev potrditve konca"
+            },
+            "debounce_time": {
+                "name": "Čas stabilizacije"
+            }
+        }
+    }
+}

@@ -1,0 +1,14 @@
+{
+    "domain": "appliance_status",
+    "name": "Appliance Status Monitor",
+    "version": "1.0.0",
+    "codeowners": [
+        "@dlupsa"
+    ],
+    "config_flow": true,
+    "dependencies": [],
+    "documentation": "https://github.com/dlupsa/ha-appliance-status",
+    "iot_class": "local_push",
+    "requirements": [],
+    "integration_type": "device"
+}
