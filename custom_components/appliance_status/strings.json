@@ -6,11 +6,13 @@
                 "description": "Set up power monitoring for an appliance. After setup, adjust thresholds and delays using the number entities.",
                 "data": {
                     "appliance_name": "Appliance name",
-                    "power_entity": "Power sensor"
+                    "power_entity": "Power sensor",
+                    "energy_entity": "Energy sensor (optional)"
                 },
                 "data_description": {
                     "appliance_name": "A friendly name for this appliance (e.g. Washing Machine, Dryer)",
-                    "power_entity": "The power consumption sensor entity (in Watts)"
+                    "power_entity": "The power consumption sensor entity (in Watts)",
+                    "energy_entity": "Optional energy sensor (in kWh) to track energy per cycle"
                 }
             }
         },
@@ -40,6 +42,9 @@
             },
             "cycles_today": {
                 "name": "Cycles today"
+            },
+            "cycle_energy": {
+                "name": "Cycle energy"
             }
         },
         "binary_sensor": {

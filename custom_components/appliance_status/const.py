@@ -5,6 +5,7 @@ DOMAIN = "appliance_status"
 # Config entry keys
 CONF_APPLIANCE_NAME = "appliance_name"
 CONF_POWER_ENTITY = "power_entity"
+CONF_ENERGY_ENTITY = "energy_entity"
 
 # Default values (from Node-RED logic analysis)
 DEFAULT_STANDBY_THRESHOLD = 2.0      # Watts

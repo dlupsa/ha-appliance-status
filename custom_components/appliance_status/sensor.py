@@ -9,7 +9,7 @@ from homeassistant.components.sensor import (
     SensorStateClass,
 )
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.const import UnitOfPower, UnitOfTime
+from homeassistant.const import UnitOfEnergy, UnitOfPower, UnitOfTime
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.device_registry import DeviceInfo
@@ -30,6 +30,7 @@ async def async_setup_entry(
         AppliancePowerSensor(monitor, entry),
         ApplianceCycleDurationSensor(monitor, entry),
         ApplianceCyclesTodaySensor(monitor, entry),
+        ApplianceCycleEnergySensor(monitor, entry),
     ])
 
 
@@ -159,3 +160,25 @@ class ApplianceCyclesTodaySensor(ApplianceBaseSensor):
     def native_value(self) -> int:
         """Return cycles completed today."""
         return self._monitor.cycles_today
+
+
+class ApplianceCycleEnergySensor(ApplianceBaseSensor):
+    """Sensor showing the energy consumed in the last cycle."""
+
+    _attr_translation_key = "cycle_energy"
+    _attr_icon = "mdi:lightning-bolt"
+    _attr_device_class = SensorDeviceClass.ENERGY
+    _attr_native_unit_of_measurement = UnitOfEnergy.KILO_WATT_HOUR
+    _attr_state_class = SensorStateClass.MEASUREMENT
+
+    def __init__(
+        self, monitor: ApplianceMonitor, entry: ConfigEntry
+    ) -> None:
+        """Initialize the sensor."""
+        super().__init__(monitor, entry)
+        self._attr_unique_id = f"{entry.entry_id}_cycle_energy"
+
+    @property
+    def native_value(self) -> float | None:
+        """Return energy consumed in last cycle."""
+        return self._monitor.cycle_energy

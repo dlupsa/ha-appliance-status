@@ -6,7 +6,7 @@ import voluptuous as vol
 from homeassistant import config_entries
 from homeassistant.helpers import selector
 
-from .const import CONF_APPLIANCE_NAME, CONF_POWER_ENTITY, DOMAIN
+from .const import CONF_APPLIANCE_NAME, CONF_ENERGY_ENTITY, CONF_POWER_ENTITY, DOMAIN
 
 
 class ApplianceStatusConfigFlow(
@@ -49,6 +49,13 @@ class ApplianceStatusConfigFlow(
                         selector.EntitySelectorConfig(
                             domain="sensor",
                             device_class="power",
+                            multiple=False,
+                        ),
+                    ),
+                    vol.Optional(CONF_ENERGY_ENTITY): selector.EntitySelector(
+                        selector.EntitySelectorConfig(
+                            domain="sensor",
+                            device_class="energy",
                             multiple=False,
                         ),
                     ),

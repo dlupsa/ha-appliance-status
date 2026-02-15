@@ -15,6 +15,7 @@ from homeassistant.helpers.event import (
 from homeassistant.util import dt as dt_util
 
 from .const import (
+    CONF_ENERGY_ENTITY,
     CONF_POWER_ENTITY,
     DEFAULT_DEBOUNCE_TIME,
     DEFAULT_FINISH_DELAY,
@@ -53,6 +54,7 @@ class ApplianceMonitor:
         self.entry = entry
 
         self._power_entity: str = entry.data[CONF_POWER_ENTITY]
+        self._energy_entity: str | None = entry.data.get(CONF_ENERGY_ENTITY)
         self._appliance_name: str = entry.data[CONF_APPLIANCE_NAME]
 
         # Internal state
@@ -64,6 +66,10 @@ class ApplianceMonitor:
         self._cycle_duration: float | None = None
         self._cycles_today: int = 0
         self._cycles_today_date: str | None = None
+
+        # Energy tracking
+        self._energy_at_start: float | None = None
+        self._cycle_energy: float | None = None
 
         # Configurable parameters (will be updated by number entities)
         self._standby_threshold: float = DEFAULT_STANDBY_THRESHOLD
@@ -115,6 +121,11 @@ class ApplianceMonitor:
     def cycle_duration(self) -> float | None:
         """Return duration of last cycle in seconds."""
         return self._cycle_duration
+
+    @property
+    def cycle_energy(self) -> float | None:
+        """Return energy consumed in last cycle in kWh."""
+        return self._cycle_energy
 
     @property
     def cycles_today(self) -> int:
@@ -354,6 +365,7 @@ class ApplianceMonitor:
         if self._state == STATE_PENDING_RUNNING:
             self._state = STATE_RUNNING
             self._last_started = dt_util.now()
+            self._energy_at_start = self._read_energy_value()
             _LOGGER.info("%s: Confirmed RUNNING", self._appliance_name)
             self._notify_update()
 
@@ -388,6 +400,14 @@ class ApplianceMonitor:
                 delta = now - self._last_started
                 self._cycle_duration = delta.total_seconds()
 
+            # Calculate cycle energy
+            energy_at_end = self._read_energy_value()
+            if self._energy_at_start is not None and energy_at_end is not None:
+                self._cycle_energy = round(
+                    energy_at_end - self._energy_at_start, 3
+                )
+            self._energy_at_start = None
+
             # Increment daily counter
             today = now.strftime("%Y-%m-%d")
             if self._cycles_today_date != today:
@@ -400,10 +420,16 @@ class ApplianceMonitor:
                 if self._cycle_duration is not None
                 else "unknown"
             )
+            energy_str = (
+                f"{self._cycle_energy:.3f} kWh"
+                if self._cycle_energy is not None
+                else "N/A"
+            )
             _LOGGER.info(
-                "%s: COMPLETED (duration: %s)",
+                "%s: COMPLETED (duration: %s, energy: %s)",
                 self._appliance_name,
                 duration_str,
+                energy_str,
             )
 
             # Fire HA event
@@ -413,6 +439,7 @@ class ApplianceMonitor:
                     "entity_id": f"sensor.appliance_{self._make_slug()}_status",
                     "appliance_name": self._appliance_name,
                     "cycle_duration": self._cycle_duration,
+                    "cycle_energy": self._cycle_energy,
                 },
             )
 
@@ -443,3 +470,15 @@ class ApplianceMonitor:
     def _make_slug(self) -> str:
         """Create a slug from the appliance name."""
         return self._appliance_name.lower().replace(" ", "_").replace("-", "_")
+
+    def _read_energy_value(self) -> float | None:
+        """Read the current value of the energy entity."""
+        if self._energy_entity is None:
+            return None
+        state = self.hass.states.get(self._energy_entity)
+        if state is None or state.state in (STATE_UNAVAILABLE, STATE_UNKNOWN):
+            return None
+        try:
+            return float(state.state)
+        except (ValueError, TypeError):
+            return None

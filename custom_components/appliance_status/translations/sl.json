@@ -6,11 +6,13 @@
                 "description": "Nastavi nadzor porabe energije za napravo. Po nastavitvi prilagodi pragove in zakasnitve z uporabo številčnih entitet.",
                 "data": {
                     "appliance_name": "Ime naprave",
-                    "power_entity": "Senzor porabe"
+                    "power_entity": "Senzor porabe",
+                    "energy_entity": "Senzor energije (opcijsko)"
                 },
                 "data_description": {
                     "appliance_name": "Prijazno ime za to napravo (npr. Pralni stroj, Sušilec)",
-                    "power_entity": "Entiteta senzorja porabe energije (v Wattih)"
+                    "power_entity": "Entiteta senzorja porabe energije (v Wattih)",
+                    "energy_entity": "Opcijski senzor energije (v kWh) za sledenje porabe na cikel"
                 }
             }
         },
@@ -40,6 +42,9 @@
             },
             "cycles_today": {
                 "name": "Cikli danes"
+            },
+            "cycle_energy": {
+                "name": "Poraba cikla"
             }
         },
         "binary_sensor": {
