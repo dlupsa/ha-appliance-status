@@ -31,6 +31,15 @@
                     "running": "Running",
                     "completed": "Completed"
                 }
+            },
+            "current_power": {
+                "name": "Current power"
+            },
+            "cycle_duration": {
+                "name": "Cycle duration"
+            },
+            "cycles_today": {
+                "name": "Cycles today"
             }
         },
         "binary_sensor": {

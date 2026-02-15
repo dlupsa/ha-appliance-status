@@ -3,22 +3,22 @@
         "step": {
             "user": {
                 "title": "Dodaj napravo",
-                "description": "Nastavi sledenje porabe energije za napravo. Po nastavitvi prilagodi pragove in zakasnitve prek number entitet.",
+                "description": "Nastavi nadzor porabe energije za napravo. Po nastavitvi prilagodi pragove in zakasnitve z uporabo številčnih entitet.",
                 "data": {
                     "appliance_name": "Ime naprave",
-                    "power_entity": "Senzor moči"
+                    "power_entity": "Senzor porabe"
                 },
                 "data_description": {
-                    "appliance_name": "Prijazno ime za napravo (npr. Pralni stroj, Sušilec)",
-                    "power_entity": "Entiteta senzorja porabe moči (v Wattih)"
+                    "appliance_name": "Prijazno ime za to napravo (npr. Pralni stroj, Sušilec)",
+                    "power_entity": "Entiteta senzorja porabe energije (v Wattih)"
                 }
             }
         },
         "error": {
-            "entity_not_found": "Senzor moči ni bil najden"
+            "entity_not_found": "Entiteta senzorja porabe ni najdena"
         },
         "abort": {
-            "already_configured": "Ta senzor moči je že konfiguriran"
+            "already_configured": "Ta senzor porabe je že nastavljen"
         }
     },
     "entity": {
@@ -29,8 +29,17 @@
                     "off": "Izklopljeno",
                     "standby": "Pripravljenost",
                     "running": "Deluje",
-                    "completed": "Končano"
+                    "completed": "Zaključeno"
                 }
+            },
+            "current_power": {
+                "name": "Trenutna poraba"
+            },
+            "cycle_duration": {
+                "name": "Trajanje cikla"
+            },
+            "cycles_today": {
+                "name": "Cikli danes"
             }
         },
         "binary_sensor": {
@@ -52,7 +61,7 @@
                 "name": "Zakasnitev potrditve konca"
             },
             "debounce_time": {
-                "name": "Čas stabilizacije"
+                "name": "Čas glajenja"
             }
         }
     }
