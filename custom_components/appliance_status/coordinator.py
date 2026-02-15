@@ -135,7 +135,14 @@ class ApplianceMonitor:
 
     @property
     def cycle_energy(self) -> float | None:
-        """Return energy consumed in last cycle in kWh."""
+        """Return energy consumed in current/last cycle in kWh."""
+        # Live energy during active cycle
+        if self._energy_at_start is not None and self._state in (
+            STATE_RUNNING, STATE_PENDING_COMPLETED
+        ):
+            current = self._read_energy_value()
+            if current is not None:
+                return round(current - self._energy_at_start, 3)
         return self._cycle_energy
 
     @property
