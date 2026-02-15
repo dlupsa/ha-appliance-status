@@ -1,6 +1,7 @@
 # 🔌 Appliance Status Monitor
 
 [![hacs_badge](https://img.shields.io/badge/HACS-Custom-41BDF5.svg)](https://github.com/hacs/integration)
+[![GitHub Release](https://img.shields.io/github/v/release/dlupsa/ha-appliance-status)](https://github.com/dlupsa/ha-appliance-status/releases)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 A Home Assistant custom integration that monitors appliance power consumption and automatically detects operational cycles. Know when your washing machine, dryer, or dishwasher has finished — no cloud services required.
@@ -10,9 +11,10 @@ A Home Assistant custom integration that monitors appliance power consumption an
 ## Features
 
 - 🔍 **Automatic cycle detection** — monitors power consumption to determine if an appliance is off, on standby, running, or has completed a cycle
-- ⚡ **Configurable thresholds** — adjust power thresholds via slider entities directly in the HA dashboard
+- ⚡ **Configurable thresholds** — adjust power thresholds via number input entities directly in the HA dashboard
 - ⏱️ **Anti-false-positive logic** — debounce mechanism and confirmation delays prevent false state changes
-- 📊 **Rich attributes** — track cycle duration, cycle count today, power consumption
+- 📊 **Dedicated sensors** — current power, cycle duration, cycles today, and energy per cycle
+- 🔋 **Energy tracking** — optional energy entity (kWh) to track consumption per cycle
 - 🔔 **Event-based notifications** — fires `appliance_status_completed` event for use in HA automations
 - 🌍 **Multi-language** — English and Slovenian translations included
 
@@ -36,30 +38,34 @@ A Home Assistant custom integration that monitors appliance power consumption an
 1. Go to **Settings → Devices & Services → Add Integration**
 2. Search for **Appliance Status Monitor**
 3. Enter a name for your appliance (e.g., "Pralni stroj")
-4. Select the power consumption sensor entity
+4. Select the **power consumption sensor** entity (W)
+5. Optionally select an **energy sensor** entity (kWh) to track energy per cycle
 
 ## Entities
 
 Each configured appliance creates the following entities:
 
-### Status Sensor
-`sensor.appliance_<name>_status` — current state of the appliance:
-- **Off** — power below standby threshold
-- **Standby** — power above standby threshold but below running threshold
-- **Running** — actively operating (confirmed after start delay)
-- **Completed** — cycle has finished
+### Sensors
 
-**Attributes:**
-- `current_power` — current power consumption (W)
+| Entity | Description |
+|---|---|
+| **Status** | Current state: Off, Standby, Running, Completed |
+| **Current power** | Real-time power consumption (W) |
+| **Cycle duration** | Duration of last completed cycle (min) |
+| **Cycles today** | Number of completed cycles today |
+| **Cycle energy** | Energy consumed in last cycle (kWh) — requires energy entity |
+
+The Status sensor also includes additional attributes:
+- `internal_state` — raw state machine state (including pending states)
 - `last_started` — timestamp of last cycle start
 - `last_completed` — timestamp of last cycle completion
-- `cycle_duration` — duration of last cycle (seconds)
-- `cycles_today` — number of completed cycles today
 
 ### Binary Sensor
 `binary_sensor.appliance_<name>_running` — simple on/off for whether the appliance is running.
 
-### Number Entities (Configuration Sliders)
+### Number Entities (Configuration)
+
+All number entities use text box input for precise value entry.
 
 | Entity | Default | Unit | Description |
 |---|---|---|---|
@@ -118,7 +124,10 @@ automation:
       - service: notify.mobile_app_your_phone
         data:
           title: "Pralni stroj je končal"
-          message: "Pralni stroj je končal s pranjem"
+          message: >
+            Pranje končano!
+            Trajanje: {{ trigger.event.data.cycle_duration | int // 60 }} min
+            Poraba: {{ trigger.event.data.cycle_energy }} kWh
 ```
 
 Or trigger on the sensor state:
@@ -136,6 +145,21 @@ automation:
           entity_id: media_player.google_home
           message: "Sušilni stroj je zaključil s sušenjem."
 ```
+
+## Changelog
+
+### v1.2.0
+- ✨ Optional energy entity (kWh) for tracking energy per cycle
+- ✨ New dedicated sensors: Current Power, Cycle Duration, Cycles Today, Cycle Energy
+- 🔧 Number inputs changed from sliders to text boxes for precise value entry
+- 🌍 Updated translations (EN, SL)
+- 🔖 HACS version tracking via GitHub releases
+
+### v1.0.0
+- 🎉 Initial release
+- Power-based state machine with configurable thresholds
+- Binary sensor, number entities, event support
+- English and Slovenian translations
 
 ## License
 
