@@ -1,7 +1,7 @@
 {
     "domain": "appliance_status",
     "name": "Appliance Status Monitor",
-    "version": "1.2.0",
+    "version": "1.2.1",
     "codeowners": [
         "@dlupsa"
     ],
