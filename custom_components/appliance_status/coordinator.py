@@ -12,6 +12,7 @@ from homeassistant.helpers.event import (
     async_call_later,
     async_track_state_change_event,
 )
+from homeassistant.helpers.storage import Store
 from homeassistant.util import dt as dt_util
 
 from .const import (
@@ -22,6 +23,7 @@ from .const import (
     DEFAULT_RUNNING_THRESHOLD,
     DEFAULT_STANDBY_THRESHOLD,
     DEFAULT_START_DELAY,
+    DOMAIN,
     EVENT_APPLIANCE_COMPLETED,
     STATE_COMPLETED,
     STATE_OFF,
@@ -33,6 +35,8 @@ from .const import (
 )
 
 _LOGGER = logging.getLogger(__name__)
+
+STORAGE_VERSION = 1
 
 # States that the sensor exposes (mapping internal -> external)
 EXTERNAL_STATE_MAP = {
@@ -86,6 +90,13 @@ class ApplianceMonitor:
         # Listeners
         self._unsub_state_change: CALLBACK_TYPE | None = None
         self._update_callbacks: list[Callable[[], None]] = []
+
+        # Persistent storage
+        self._store = Store(
+            hass,
+            STORAGE_VERSION,
+            f"{DOMAIN}.{entry.entry_id}",
+        )
 
     @property
     def state(self) -> str:
@@ -203,6 +214,9 @@ class ApplianceMonitor:
 
     async def async_start(self) -> None:
         """Start monitoring the power sensor."""
+        # Restore persisted state before starting
+        await self._async_restore_state()
+
         self._unsub_state_change = async_track_state_change_event(
             self.hass, [self._power_entity], self._async_power_state_changed
         )
@@ -221,7 +235,10 @@ class ApplianceMonitor:
                 )
 
         _LOGGER.info(
-            "%s: Started monitoring %s", self._appliance_name, self._power_entity
+            "%s: Started monitoring %s (restored state: %s)",
+            self._appliance_name,
+            self._power_entity,
+            self._state,
         )
 
     @callback
@@ -293,6 +310,7 @@ class ApplianceMonitor:
             )
             self._last_state_change = dt_util.now()
             self._notify_update()
+            self.hass.async_create_task(self._async_save_state())
 
     def _transition(self, raw_state: str) -> None:
         """Execute state machine transition based on raw power state."""
@@ -368,6 +386,7 @@ class ApplianceMonitor:
             self._energy_at_start = self._read_energy_value()
             _LOGGER.info("%s: Confirmed RUNNING", self._appliance_name)
             self._notify_update()
+            self.hass.async_create_task(self._async_save_state())
 
     def _start_pending_completed(self) -> None:
         """Start the pending_completed state with finish delay timer."""
@@ -444,6 +463,7 @@ class ApplianceMonitor:
             )
 
             self._notify_update()
+            self.hass.async_create_task(self._async_save_state())
 
     # --- Timer management ---
 
@@ -482,3 +502,73 @@ class ApplianceMonitor:
             return float(state.state)
         except (ValueError, TypeError):
             return None
+
+    # --- State persistence ---
+
+    async def _async_save_state(self) -> None:
+        """Save current state to persistent storage."""
+        data = {
+            "state": self._state,
+            "last_started": (
+                self._last_started.isoformat() if self._last_started else None
+            ),
+            "last_completed": (
+                self._last_completed.isoformat()
+                if self._last_completed
+                else None
+            ),
+            "cycle_duration": self._cycle_duration,
+            "cycles_today": self._cycles_today,
+            "cycles_today_date": self._cycles_today_date,
+            "cycle_energy": self._cycle_energy,
+            "energy_at_start": self._energy_at_start,
+        }
+        await self._store.async_save(data)
+        _LOGGER.debug("%s: State saved", self._appliance_name)
+
+    async def _async_restore_state(self) -> None:
+        """Restore state from persistent storage."""
+        data = await self._store.async_load()
+        if data is None:
+            _LOGGER.debug("%s: No stored state to restore", self._appliance_name)
+            return
+
+        try:
+            stored_state = data.get("state", STATE_OFF)
+            # If appliance was mid-cycle (running/pending), restore as running
+            # so it can detect the finish. If completed, restore as completed.
+            if stored_state in (STATE_RUNNING, STATE_PENDING_RUNNING):
+                self._state = STATE_RUNNING
+            elif stored_state == STATE_PENDING_COMPLETED:
+                self._state = STATE_RUNNING
+            elif stored_state in (STATE_COMPLETED, STATE_STANDBY, STATE_OFF):
+                self._state = stored_state
+            else:
+                self._state = STATE_OFF
+
+            if data.get("last_started"):
+                self._last_started = dt_util.parse_datetime(
+                    data["last_started"]
+                )
+            if data.get("last_completed"):
+                self._last_completed = dt_util.parse_datetime(
+                    data["last_completed"]
+                )
+
+            self._cycle_duration = data.get("cycle_duration")
+            self._cycles_today = data.get("cycles_today", 0)
+            self._cycles_today_date = data.get("cycles_today_date")
+            self._cycle_energy = data.get("cycle_energy")
+            self._energy_at_start = data.get("energy_at_start")
+
+            _LOGGER.info(
+                "%s: Restored state: %s (cycles today: %d)",
+                self._appliance_name,
+                self._state,
+                self._cycles_today,
+            )
+        except Exception:  # noqa: BLE001
+            _LOGGER.warning(
+                "%s: Failed to restore state, starting fresh",
+                self._appliance_name,
+            )
