@@ -13,6 +13,7 @@ from homeassistant.const import UnitOfEnergy, UnitOfPower, UnitOfTime
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.device_registry import DeviceInfo
+from homeassistant.util import dt as dt_util
 
 from .const import CONF_APPLIANCE_NAME, DOMAIN
 from .coordinator import ApplianceMonitor
@@ -120,7 +121,7 @@ class AppliancePowerSensor(ApplianceBaseSensor):
 
 
 class ApplianceCycleDurationSensor(ApplianceBaseSensor):
-    """Sensor showing the last cycle duration in minutes."""
+    """Sensor showing cycle duration: live elapsed time when running, last completed otherwise."""
 
     _attr_translation_key = "cycle_duration"
     _attr_icon = "mdi:timer-outline"
@@ -136,7 +137,10 @@ class ApplianceCycleDurationSensor(ApplianceBaseSensor):
 
     @property
     def native_value(self) -> float | None:
-        """Return the last cycle duration in minutes."""
+        """Return live elapsed time when running, or last completed duration."""
+        if self._monitor.is_running and self._monitor.last_started is not None:
+            elapsed = (dt_util.now() - self._monitor.last_started).total_seconds()
+            return round(elapsed / 60, 1)
         if self._monitor.cycle_duration is not None:
             return round(self._monitor.cycle_duration / 60, 1)
         return None
